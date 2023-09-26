@@ -1,0 +1,837 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id       Int   @id @db.UnsignedInt @default(autoincrement())
+  name     String @db.VarChar(191)
+  email     String ? @db.VarChar(191)
+  email_verified_at DateTime?
+  password  String? @db.VarChar(191)
+  remember_token String ? @db.VarChar(100)
+  created_at DateTime ? @default(now())
+  updated_at DateTime ?  @updatedAt
+  auth_token String ? @db.LongText 
+  phone String  @unique @db.VarChar(191)
+  default_address_id Int? @db.UnsignedInt
+  delivery_pin String ? @db.VarChar(191)
+  delivery_guy_detail_id Int? @unique @db.UnsignedInt
+  avatar String ? @db.Text()
+  is_active Int @default(1) @db.TinyInt()
+  tax_number String ? @db.VarChar(191)
+  user_ip String ? @db.Text
+
+
+
+  Deliveryguydetails  Delivery_guy_details? @relation(fields: [delivery_guy_detail_id], references: [id])
+  Address1  Address? @relation("Address1",fields: [default_address_id], references: [id])
+
+
+  Restaurant_user Restaurant_user[]
+  users Orders []
+  Addons Addons[]
+  Alerts Alerts[]
+  Ratings Ratings[]
+  favorites favorites[]
+  Incentives Incentives[]
+  Delivery_collections Delivery_collections[]
+  Addon_categories Addon_categories[]
+  item_categories item_categories[]
+  Push_tokens Push_tokens[]
+  delivery_boy Accept_deliveries [] @relation("delivery_boy")
+  customer Accept_deliveries [] @relation("customer")
+  Restaurant_earnings Restaurant_earnings[]
+}
+
+model Delivery_guy_details{
+  id       Int   @id @db.UnsignedInt  @default(autoincrement()) 
+  name     String @db.VarChar(191)
+  age      String ?  @db.VarChar(191)
+  gender   String ?  @db.VarChar(191)
+  photo    String ?  @db.VarChar(191)
+  description String ?  @db.VarChar(191)
+  vehicle_number  String ?  @db.VarChar(191)
+  created_at DateTime ? @default(now())
+  updated_at DateTime ?  @updatedAt
+  commision_rate  Decimal @db.Decimal(8 ,2) @default(5.00)
+  is_notifiable Int ? @db.TinyInt @default(0)
+  max_accept_delivery_limit Int @default(100)
+  delivery_lat  String ?  @db.VarChar(191)
+  delivery_long  String ?  @db.VarChar(191)
+  heading  String ?  @db.VarChar(191)
+  tip_commision_rate  Decimal @default(100.00) @db.Decimal(8,2)
+  status Int @db.TinyInt @default(1)
+
+  Ratings Ratings[]
+  User Users?
+  Incentives Incentives []
+}
+
+
+
+model Address {
+  id Int @id @db.UnsignedInt @default(autoincrement())
+  user_id Int @db.UnsignedInt
+  address String? @db.Text
+  house String? @db.Text
+  landmark String? @db.Text
+  tag String? @db.Text
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  latitude String? @db.VarChar(191)
+  longitude String? @db.VarChar(191)
+
+
+
+
+  Users1 Users[] @relation("Address1")
+}
+
+
+model Accept_deliveries {
+  id Int @id @db.UnsignedInt @default(autoincrement())
+  order_id Int @db.UnsignedInt @unique
+  user_id Int @db.UnsignedInt @unique
+  customer_id Int @db.UnsignedInt @unique
+  is_complete Int? @db.TinyInt @default(0)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+
+  orders Orders @relation(fields: [order_id], references: [id])
+  delivery_boy Users @relation("delivery_boy", fields: [user_id], references: [id])
+  customer Users @relation("customer", fields: [customer_id], references: [id])
+}
+
+
+model Orders {
+  id Int @id @db.UnsignedInt @default(autoincrement())
+  unique_order_id String @db.VarChar(191)
+  orderstatus_id Int @db.UnsignedInt
+  user_id Int @db.UnsignedInt
+  coupon_name String? @db.VarChar(191)
+  location String? @db.MediumText
+  address String @db.VarChar(191)
+  tax Decimal? @db.Decimal(20, 2)
+  restaurant_charge Decimal? @db.Decimal(20, 2)
+  delivery_charge Decimal? @db.Decimal(20, 2)
+  total Decimal @db.Decimal(20, 2)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  payment_mode String @db.VarChar(191)
+  order_comment String? @db.Text
+  restaurant_id Int @db.UnsignedInt
+  transaction_id Int @db.UnsignedInt
+  delivery_type Int @default(1)
+  payable Decimal @db.Decimal(20, 2) @default(0.00)
+  wallet_amount Decimal? @db.Decimal(8, 2)
+  tip_amount Decimal? @db.Decimal(8, 2)
+  tax_amount Decimal? @db.Decimal(8, 2)
+  coupon_amount Decimal? @db.Decimal(8, 2)
+  coupon_isrestaurant Int @db.TinyInt @default(1)
+  sub_total Decimal? @db.Decimal(8, 2)
+  cash_change_amount Int?
+  restaurant_tax String? @db.VarChar(255)
+  online_payment_status String? @db.Text
+  rain_charge Decimal @db.Decimal(20, 2)
+  extra_charge Decimal @db.Decimal(20, 2)
+  extra_title String? @db.VarChar(191) @default("Rain Surge")
+
+
+
+
+  Orderstatuses Orderstatuses @relation(fields: [orderstatus_id], references: [id])
+  Users Users @relation(fields: [user_id], references: [id])
+  Restaurants Restaurants @relation(fields: [restaurant_id], references: [id])
+  Transaction Transaction @relation(fields: [transaction_id], references: [id])
+
+
+  Ratings Ratings[]
+  Accept_delivery Accept_deliveries?
+  Orderitems Orderitems[]
+
+}
+
+
+
+model Orderstatuses {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  name String @db.VarChar(191)
+
+  Orders Orders[]
+
+}
+
+
+
+model Restaurants {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  name String @db.VarChar(191)
+  description String? @db.VarChar(191)
+  location_id String? @db.VarChar(191)
+  image String? @db.VarChar(191)
+  rating String? @db.VarChar(191)
+  delivery_time String? @db.VarChar(191)
+  price_range String? @db.VarChar(191)
+  is_pureveg Int @db.TinyInt @default(0)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  slug String? @db.VarChar(191) @unique
+  placeholder_image String? @db.VarChar(191)
+  latitude String? @db.VarChar(191)
+  longitude String? @db.VarChar(191)
+  certificate String? @db.VarChar(191)
+  restaurant_charge Decimal? @db.Decimal(20, 2)
+  delivery_charges Decimal? @db.Decimal(20, 2)
+  address String @db.Text
+  pincode String? @db.VarChar(191)
+  landmark String? @db.Text
+  sku String @db.VarChar(191) @unique
+  is_active Int @db.TinyInt @default(0)
+  is_accepted Int @db.TinyInt @default(0)
+  is_feature Int @db.TinyInt @default(0)
+  commission_rate Decimal @db.Decimal(8, 2) @default(0.00)
+  delivery_type Int @default(1)
+  delivery_radius Decimal @db.Decimal(8, 2) @default(10.00)
+  delivery_charge_type String @db.VarChar(191) @default("FIXED")
+  base_delivery_charge Decimal? @db.Decimal(20, 2)
+  base_delivery_distance Int?
+  extra_delivery_charge Decimal? @db.Decimal(20, 2)
+  extra_delivery_distance Int?
+  min_order_price Decimal @db.Decimal(20, 2) @default(0.00)
+  is_notifiable Int? @db.TinyInt @default(0)
+  auto_acceptable Int @db.TinyInt @default(0)
+  schedule_data String? @db.LongText 
+  is_schedulable Int @db.TinyInt @default(0)
+  order_column Int? 
+  custom_message String? @db.LongText
+  is_orderschedulling Int @db.TinyInt @default(0)
+  // branch_id Int? 
+
+
+  Slides Slides[]
+  Restaurant_user Restaurant_user[]
+  Restaurant_earnings Restaurant_earnings []
+  Restaurant_category_restaurant Restaurant_category_restaurant[]
+  Ratings Ratings[]
+  Orders Orders[]
+  Items Items[]
+  Branch Branch[]
+  Coupons Coupons[]
+  Coupon_restaurant Coupon_restaurant[]
+  Restaurant_payouts Restaurant_payouts[]
+}
+
+
+enum type {
+  deposit
+  withdraw
+}
+
+
+model Transaction {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  payable_type String @db.VarChar(191)
+  payable_id BigInt @db.UnsignedBigInt
+  wallet_id Int? @db.UnsignedInt
+  type type
+  amount BigInt
+  confirmed Int @db.TinyInt
+  meta String? @db.LongText
+  uuid String @db.Char(36)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+
+  Wallets Wallets? @relation(fields: [wallet_id], references: [id])
+
+
+
+  Orders Orders []
+  
+}
+
+
+model Addons {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  name String @db.VarChar(191)
+  price Decimal @db.Decimal(20, 2)
+
+  addon_category_id Int @db.UnsignedInt
+  Addon_categories Addon_categories @relation(fields: [addon_category_id], references: [id])
+
+  user_id Int @db.UnsignedInt
+  Users Users @relation(fields: [user_id], references: [id])
+
+
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  is_active Int @db.TinyInt @default(0)
+
+}
+
+
+model Addon_categories {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  name String @db.VarChar(191)
+  type String? @db.VarChar(191)
+  user_id Int @db.UnsignedInt
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  description String? @db.Text
+  addon_limit Int @default(0)
+
+
+  Users Users @relation(fields: [user_id], references: [id])
+
+
+
+  Addons Addons []
+  Addon_category_item Addon_category_item[]
+}
+
+
+
+model Addon_category_item {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  addon_category_id Int @db.UnsignedInt
+  item_id Int @db.UnsignedInt
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+
+  Addon_categories Addon_categories @relation(fields: [addon_category_id], references: [id])
+  Items Items @relation(fields: [item_id], references: [id])
+
+
+}
+
+
+model Items {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  restaurant_id Int @db.UnsignedInt
+  item_category_id Int @db.UnsignedInt
+  name String @db.VarChar(191)
+  price Decimal @db.Decimal(20, 2)
+  old_price Decimal @db.Decimal(20, 2) @default(0.00)
+  image String? @db.VarChar(191)
+  is_recommended Int @db.TinyInt
+  is_popular Int @db.TinyInt
+  is_new Int @db.TinyInt
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  desc String? @db.LongText
+  placeholder_image String? @db.VarChar(191)
+  is_active Int @db.TinyInt @default(1)
+  is_veg Int? @db.TinyInt
+  order_column Int?
+
+
+
+  Restaurants Restaurants @relation(fields: [restaurant_id], references: [id])
+  item_categories item_categories @relation(fields: [item_category_id], references: [id])
+
+
+
+
+  Slides Slides[]
+  Addon_category_item Addon_category_item[]
+  Orderitems Orderitems[]
+}
+
+
+model Alerts {
+  id BigInt @id @db.UnsignedBigInt  @default(autoincrement())
+  data String? @db.LongText
+  user_id Int? @db.UnsignedInt
+  is_read Int @db.TinyInt @default(0)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+  Users Users? @relation(fields: [user_id], references: [id])
+
+
+
+}
+
+
+model Branch {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  name String? @db.VarChar(191)
+  email String @db.VarChar(191)
+  password String @db.VarChar(191)
+  is_franchise Int @db.TinyInt @default(0)
+  is_active Int @db.TinyInt @default(1)
+  restaurant_id Int? @db.UnsignedInt
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+
+  Restaurants Restaurants? @relation(fields: [restaurant_id], references: [id])
+
+
+
+}
+
+
+model Coupons {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  name String? @db.VarChar(191)
+  description String? @db.VarChar(191)
+  code String @db.VarChar(191)
+  success_count Int @default(0)
+  success_amount Decimal @db.Decimal(20,0)
+  discount_type String @db.VarChar(191)
+  discount String @db.VarChar(191)
+  expiry_date DateTime? 
+  is_active Int @db.TinyInt @default(0)
+  is_restaurant Int @db.TinyInt @default(1)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  restaurant_id Int? @db.UnsignedInt
+  count Int @default(0)
+  max_count Int @default(1)
+  min_subtotal Decimal @db.Decimal(20, 2) @default(0.00)
+  max_discount Decimal? @db.Decimal(20, 2)
+  subtotal_message String? @db.VarChar(191)
+  user_type String? @db.VarChar(191)
+  max_count_per_user Int?
+
+
+
+  Restaurants Restaurants? @relation(fields: [restaurant_id], references: [id])
+
+
+
+
+
+  Coupon_restaurant Coupon_restaurant[]
+}
+
+
+model Coupon_restaurant {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  coupon_id Int @db.UnsignedInt
+  restaurant_id Int @db.UnsignedInt
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+
+  Coupons Coupons @relation(fields: [coupon_id], references: [id])
+  Restaurants Restaurants @relation(fields: [restaurant_id], references: [id])
+
+
+
+
+}
+
+
+model Delivery_collections {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  user_id Int @db.UnsignedInt
+  amount Decimal @db.Decimal(20, 2) @default(0.00)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+
+  Users Users @relation(fields: [user_id], references: [id])
+
+
+
+
+  Delivery_collection_logs Delivery_collection_logs[]
+}
+
+
+
+model Delivery_collection_logs {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  delivery_collection_id Int @db.UnsignedInt
+  amount Decimal @db.Decimal(20, 2)
+  type String? @db.VarChar(191)
+  message String? @db.LongText
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+
+  Delivery_collections Delivery_collections @relation(fields: [delivery_collection_id], references: [id])
+
+
+
+
+}
+
+
+
+model favorites {
+  user_id Int @db.UnsignedInt
+  favoriteable_type String @db.VarChar(191)
+  favoriteable_id BigInt @id @db.UnsignedBigInt  @default(autoincrement())
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+  Users Users @relation(fields: [user_id], references: [id])
+
+
+}
+
+
+model Incentives {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  user_id Int @db.UnsignedInt 
+  delivery_guy_detail_id Int? @db.UnsignedInt
+  total_order Int @db.UnsignedInt @default(0)
+  delivery_charge Decimal? @db.Decimal(20, 2)
+  extra_delivery_charge Decimal? @db.Decimal(20, 2)
+  delivery_tip Decimal? @db.Decimal(20, 2)
+  incentive Decimal? @db.Decimal(20, 2)
+  extra_amount Decimal? @db.Decimal(20, 2)
+  total_amount Decimal? @db.Decimal(20, 2) @default(0.00)
+  incentive_date DateTime?
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  extra_surge Decimal @db.Decimal(20, 2) @default(0.00)
+
+
+
+  Users Users @relation(fields: [user_id], references: [id])
+  Deliveryguydetails  Delivery_guy_details? @relation(fields: [delivery_guy_detail_id], references: [id])
+
+
+
+
+}
+
+
+model item_categories {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  name String @db.VarChar(191)
+  is_enabled Int @db.TinyInt @default(1)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  user_id Int @db.UnsignedInt 
+  order_column Int?
+
+
+  Users Users @relation(fields: [user_id], references: [id])
+
+
+  Items Items[]
+}
+
+
+
+// model Migrations {
+//   id Int @id @db.UnsignedInt  @default(autoincrement())
+//   migration String @db.VarChar(191)
+//   batch Int
+// }
+
+
+
+model Orderitems {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  order_id Int @db.UnsignedInt
+  item_id Int @db.UnsignedInt
+  name String @db.VarChar(191)
+  quantity Int
+  price Decimal @db.Decimal(20, 2)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+  Orders Orders @relation(fields: [order_id], references: [id])
+  Items Items @relation(fields: [item_id], references: [id])
+
+
+
+
+  Order_item_addons Order_item_addons[]
+}
+
+
+model Order_item_addons {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  orderitem_id Int @db.UnsignedInt
+  addon_category_name String @db.VarChar(191)
+  addon_name String @db.VarChar(191)
+  addon_price Decimal @db.Decimal(20, 2)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+  Orderitems Orderitems @relation(fields: [orderitem_id], references: [id])
+
+
+
+}
+
+
+model Pages {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  name String @db.VarChar(191)
+  slug String @db.VarChar(191) @unique
+  body String? @db.LongText
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+}
+
+
+model Promo_sliders {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  name String @db.VarChar(191)
+  is_active Int @db.TinyInt @default(0)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  location_id Int?
+  position_id Int @default(0)
+  size Int @default(5)
+
+  Slides Slides[]
+}
+
+
+model Push_tokens {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  token String @db.LongText
+  status Int @db.TinyInt @default(0)
+  is_sent Int @db.TinyInt @default(0)
+  is_active Int @db.TinyInt @default(1)
+  user_id Int? @db.UnsignedInt
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+
+  Users Users? @relation(fields: [user_id], references: [id])
+
+}
+
+
+model Ratings {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  user_id Int @db.UnsignedInt
+  order_id Int @db.UnsignedInt
+  restaurant_id Int @db.UnsignedInt
+  delivery_id Int? @db.UnsignedInt
+  rating_store Int?
+  rating_delivery Int?
+  review_store String? @db.Text
+  review_delivery String? @db.Text
+  is_active Int @db.TinyInt @default(1)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+  Users Users @relation(fields: [user_id], references: [id])
+  Orders Orders @relation(fields: [order_id], references: [id])
+  Restaurants Restaurants @relation(fields: [restaurant_id], references: [id])
+  Delivery Delivery_guy_details? @relation(fields: [delivery_id], references: [id])
+
+}
+
+
+model Referrals {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  referral_code String? @db.VarChar(191)
+  refer_from String? @db.VarChar(191)
+  refer_to String? @db.VarChar(191)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+}
+
+
+model Restaurant_categories {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  name String @db.VarChar(191)
+  is_active Int @db.TinyInt @default(1)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+  Restaurant_category_restaurant Restaurant_category_restaurant []
+}
+
+
+model Restaurant_category_restaurant {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  restaurant_category_id Int @db.UnsignedInt
+  restaurant_id Int @db.UnsignedInt
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+  Restaurant_categories Restaurant_categories @relation(fields: [restaurant_category_id], references: [id])
+  Restaurants Restaurants @relation(fields: [restaurant_id], references: [id])
+
+}
+
+
+model Restaurant_category_sliders {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  name String @db.VarChar(191)
+  image String? @db.Text
+  image_placeholder String? @db.Text
+  categories_ids String @db.LongText
+  is_active Int @db.TinyInt @default(1)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  order_column Int?
+}
+
+
+model Restaurant_earnings {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  restaurant_id Int @db.UnsignedInt
+  user_id Int? @db.UnsignedInt
+  amount Decimal @db.Decimal(20, 2) @default(0.00)
+  extra Decimal @db.Decimal(20, 2) @default(0.00)
+  is_requested Int @db.TinyInt @default(0)
+  is_processed Int @db.TinyInt @default(0)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  restaurant_payout_id Int? @db.UnsignedInt
+
+
+
+  Restaurants Restaurants @relation(fields: [restaurant_id], references: [id])
+  Users Users? @relation(fields: [user_id], references: [id])
+  Restaurant_payouts Restaurant_payouts? @relation(fields: [restaurant_payout_id], references: [id])
+
+
+  Rest_payouts Restaurant_payouts[] @relation("Rest_earnings")
+}
+
+
+
+model Restaurant_payouts {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  restaurant_id Int @db.UnsignedInt
+  restaurant_earning_id Int @db.UnsignedInt
+  amount Decimal @db.Decimal(20, 2) @default(0.00)
+  status String @db.VarChar(191)
+  transaction_mode String? @db.VarChar(191)
+  transaction_id Int? @db.UnsignedInt
+  message String? @db.LongText
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+  Restaurants Restaurants @relation(fields: [restaurant_id], references: [id])
+  Rest_earnings Restaurant_earnings @relation("Rest_earnings", fields: [restaurant_earning_id], references: [id])
+  Transactions Transactions? @relation(fields: [transaction_id], references: [id])
+
+
+  Restaurant_earnings Restaurant_earnings[]
+}
+
+
+model Restaurant_user {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  user_id Int @db.UnsignedInt
+  restaurant_id Int @db.UnsignedInt
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+  Users Users @relation(fields: [user_id], references: [id])
+  Restaurants Restaurants @relation(fields: [restaurant_id], references: [id])
+
+}
+
+
+model Roles {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  name String @db.VarChar(191)
+  guard_name String @db.VarChar(191)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+}
+
+
+// model Role_has_permissions
+
+
+model Settings {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  key String @db.VarChar(191)
+  value String? @db.LongText
+}
+
+
+model Slides {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  promo_slider_id Int @db.UnsignedInt
+  unique_id String? @db.VarChar(191)
+  name String? @db.VarChar(191)
+  image String? @db.Text
+  image_placeholder String? @db.Text
+  url String? @db.Text
+  is_active Int @db.TinyInt @default(1)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  order_column Int?
+  model String? @db.VarChar(191)
+  item_id Int? @db.UnsignedInt
+  restaurant_id Int? @db.UnsignedInt
+  is_locationset Int @db.TinyInt @default(0)
+  latitude String? @db.VarChar(191)
+  longitude String? @db.VarChar(191)
+  radius String? @db.VarChar(191)
+
+
+  Promo_sliders Promo_sliders @relation(fields: [promo_slider_id], references: [id])
+  Items Items? @relation(fields: [item_id], references: [id])
+  Restaurants Restaurants? @relation(fields: [restaurant_id], references: [id])
+
+}
+
+
+model Transactions {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  payable_type String @db.VarChar(191)
+  payable_id BigInt @db.UnsignedBigInt
+  wallet_id Int? @db.UnsignedInt
+  type type
+  amount BigInt
+  confirmed Int @db.TinyInt
+  meta String? @db.LongText
+  uuid String @db.Char(36)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+  Restaurant_payouts Restaurant_payouts[]
+}
+
+
+
+model Wallets {
+  id Int @id @db.UnsignedInt  @default(autoincrement())
+  holder_type String @db.VarChar(191)
+  holder_id BigInt @db.UnsignedBigInt
+  name String @db.VarChar(191)
+  slug String @db.VarChar(191)
+  description String? @db.VarChar(191)
+  balance BigInt @default(0)
+  decimal_places Int @db.SmallInt @default(2)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+
+  Transaction Transaction []
+}
